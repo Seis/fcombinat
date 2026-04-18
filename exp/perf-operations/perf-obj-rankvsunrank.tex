@@ -1,0 +1,101 @@
+\documentclass[tikz]{standalone}
+
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usetikzlibrary{patterns}
+\pgfplotsset{compat=1.18}
+
+% Okabe-Ito colorblind-safe palette (one colour per n value)
+\definecolor{okblue}{RGB}{0,114,178}
+\definecolor{okorange}{RGB}{230,159,0}
+\definecolor{okgreen}{RGB}{0,158,115}
+\definecolor{okred}{RGB}{213,94,0}
+\definecolor{okpurple}{RGB}{204,121,167}
+
+\begin{document}
+
+\pgfplotstableread[col sep=tab]{perf-obj-rankvsunrank.dat}\benchdata
+
+% Bar shifts for 10 series (bar width=4pt, sep=2pt):
+%   slot = bar_width + sep  →  change sep here, then update all bar shift values below
+%   shift(i) = (i - 4.5) * slot
+%   i=0..9 → -27, -21, -15, -9, -3, +3, +9, +15, +21, +27  (slot=6pt)
+
+\begin{tikzpicture}
+\begin{axis}[name=mainaxis,
+  ybar,
+  ymode            = log,
+  bar width        = 4pt,
+  height           = 8cm,
+  width            = 13cm,  % ← inter-group spacing: wider = more space between structures
+  scale only axis,
+  ylabel           = {CPU cycles (log scale, median of 3 trials)},
+  xtick            = data,
+  xticklabels      = {
+    \shortstack{Cycles\\\scriptsize Cyc($Z$)},
+    \shortstack{Dist.\ Part.\\\scriptsize PSet(Seq($Z$))$^*$},
+    \shortstack{Int.\ Part.\\\scriptsize Set(Seq($Z$))$^*$},
+    \shortstack{Permutations\\\scriptsize Set(Cyc($Z$))},
+    \shortstack{Surjections\\\scriptsize Seq(Set($Z$))$^*$}
+  },
+  xticklabel style = {font=\small, align=center},
+  enlarge x limits = {abs=0.6},
+  ymajorgrids      = true,
+  grid style       = {dashed, gray!40},
+  unbounded coords = discard,
+  legend style     = {font=\small, draw=none, fill=none, legend columns=1,
+                      at={(1.02,1)}, anchor=north west},
+  legend cell align = left,
+]
+
+\addplot[forget plot, bar shift=-27pt, fill=okblue!80,   draw=okblue!90!black]
+  table [x expr=\coordindex, y=n10_rank]   {\benchdata};
+\addplot[forget plot, bar shift=-21pt, fill=okblue!40,   draw=okblue!90!black,
+  postaction={pattern=north east lines, pattern color=okblue!90!black}]
+  table [x expr=\coordindex, y=n10_unrank] {\benchdata};
+
+\addplot[forget plot, bar shift=-15pt, fill=okorange!80, draw=okorange!90!black]
+  table [x expr=\coordindex, y=n20_rank]   {\benchdata};
+\addplot[forget plot, bar shift=-9pt,  fill=okorange!40, draw=okorange!90!black,
+  postaction={pattern=north east lines, pattern color=okorange!90!black}]
+  table [x expr=\coordindex, y=n20_unrank] {\benchdata};
+
+\addplot[forget plot, bar shift=-3pt,  fill=okgreen!80,  draw=okgreen!90!black]
+  table [x expr=\coordindex, y=n50_rank]   {\benchdata};
+\addplot[forget plot, bar shift=+3pt,  fill=okgreen!40,  draw=okgreen!90!black,
+  postaction={pattern=north east lines, pattern color=okgreen!90!black}]
+  table [x expr=\coordindex, y=n50_unrank] {\benchdata};
+
+\addplot[forget plot, bar shift=+9pt,  fill=okred!80,    draw=okred!90!black]
+  table [x expr=\coordindex, y=n100_rank]   {\benchdata};
+\addplot[forget plot, bar shift=+15pt, fill=okred!40,    draw=okred!90!black,
+  postaction={pattern=north east lines, pattern color=okred!90!black}]
+  table [x expr=\coordindex, y=n100_unrank] {\benchdata};
+
+\addplot[forget plot, bar shift=+21pt, fill=okpurple!80, draw=okpurple!90!black]
+  table [x expr=\coordindex, y=n200_rank]   {\benchdata};
+\addplot[forget plot, bar shift=+27pt, fill=okpurple!40, draw=okpurple!90!black,
+  postaction={pattern=north east lines, pattern color=okpurple!90!black}]
+  table [x expr=\coordindex, y=n200_unrank] {\benchdata};
+
+% --- Legend section 1: size n (colours) ---
+\addlegendimage{empty legend}                                           \addlegendentry{\textbf{Size} $n$}
+\addlegendimage{area legend, fill=okblue!80,   draw=okblue!90!black}   \addlegendentry{$n=10$}
+\addlegendimage{area legend, fill=okorange!80, draw=okorange!90!black} \addlegendentry{$n=20$}
+\addlegendimage{area legend, fill=okgreen!80,  draw=okgreen!90!black}  \addlegendentry{$n=50$}
+\addlegendimage{area legend, fill=okred!80,    draw=okred!90!black}    \addlegendentry{$n=100$}
+\addlegendimage{area legend, fill=okpurple!80, draw=okpurple!90!black} \addlegendentry{$n=200$}
+
+% --- Legend section 2: operation (solid=rank, hatched=unrank) ---
+\addlegendimage{empty legend}                                           \addlegendentry{\textbf{Operation}}
+\addlegendimage{area legend, fill=gray, draw=black}                   \addlegendentry{Rank}
+\addlegendimage{area legend, fill=white, draw=black,
+  postaction={pattern=north east lines, pattern color=black}}          \addlegendentry{Unrank}
+
+\end{axis}
+\node[anchor=south east, font=\tiny, text=gray, inner sep=0pt, align=right,
+  xshift=-4pt, yshift=4pt]
+  at (current bounding box.south east) {$^*$\,constructor has\\cardinality restrictions};
+\end{tikzpicture}
+
+\end{document}

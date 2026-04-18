@@ -1,0 +1,29 @@
+CLEAN_EXTS_DAT := *.dat
+CLEAN_EXTS_TEX := *.aux *.log *.fls *.fdb_latexmk *.synctex.gz *.synctex \
+		  *.png *.pdf *.tex
+
+# Pattern rules: dat+gp → png, tex → pdf
+%.png: %.dat %.gp
+	gnuplot -c $(word 2,$^) $< $@
+
+%.pdf: %.tex
+	TEXINPUTS=.:$(dir $<): latexmk -f -interaction=nonstopmode -shell-escape \
+		-pdf -use-make -outdir=$(dir $<) $<
+
+EXP_DIRS :=
+
+include exp/perf-operations/Makefile
+
+.PHONY: figures bench clean-data clean-figures
+
+figures: perf-operations
+
+bench:
+	FCOMBINAT_BIN="$(abspath $(FCOMBINAT_BIN))" MAPLE_BIN="$(MAPLE_BIN)" \
+		sh -c 'cd exp/performance && ./run_suite.sh'
+
+clean-data:
+	$(foreach dir,$(EXP_DIRS),$(RM) $(wildcard $(addprefix $(dir)/,$(CLEAN_EXTS_DAT))))
+
+clean-figures:
+	$(foreach dir,$(EXP_DIRS),$(RM) $(wildcard $(addprefix $(dir)/,$(CLEAN_EXTS_TEX))))

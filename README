@@ -1,0 +1,126 @@
+fcombinat
+
+A C library and command-line tool for generic (un)ranking of
+combinatorial structures. Given a formal specification in the symbolic method,
+fcombinat derives ranking and unranking algorithms automatically, with no
+hand-crafted code per structure. Compatible with specification files from the
+ECS-data repository (Jeremy Lumbroso).
+
+BUILDING
+    Dependencies: gcc, bison, flex, flint, libm
+
+    make
+
+    The binary is placed at ./fcombinat.
+    To use a different compiler: make CC=clang
+
+USAGE
+    fcombinat [OPTIONS] ACTION -n N
+
+DESCRIPTION
+    Parses a combinatorial specification (grammar) and performs ranking,
+    unranking, enumeration, or series expansion. Implements generic ranking and
+    unranking algorithms for both labeled and unlabeled structures, based on the
+    Molinero et al. framework. Unlabeled Cycle ranking remains an open problem
+    and is not yet supported.
+
+OPTIONS
+    -j, -g, --parse-json <FILE|SPEC>
+            Path to a JSON grammar specification file, or an inline spec string.
+
+    -n, --size <N>
+            Size parameter. Required for all actions.
+
+    -l, --labeled
+            Treat the specification as a labeled combinatorial class (EGF semantics).
+            Without this flag, OGF semantics are used.
+
+    -P, --poly
+            Output terms in polynomial format (e.g., c*z^n).
+
+    -v, --verbose
+            Enable verbose output.
+
+    --symbol <S>
+            Target symbol to analyze or generate.
+            If not provided, the first symbol in the grammar is used.
+
+ACTIONS (mutually exclusive, one required)
+    --terms
+            Print coefficients c_0..c_N of the generating function.
+
+    --rank <OBJ>
+            Compute the integer rank of the given object string.
+            Uses a fixed lexicographic ordering.
+
+    --unrank <INT>
+            Generate the object at the given integer rank.
+            Uses a fixed lexicographic ordering.
+
+    --enum-all
+            Enumerate and print all objects of size N.
+
+    --bijection
+            Run rank -> unrank -> rank roundtrip tests for sizes 1..N-1.
+            Exhaustive when c_n <= 50, sampled otherwise.
+            Requires --symbol.
+
+EXAMPLES
+    # Print the first 6 coefficients (Catalan numbers, unlabeled binary trees)
+    fcombinat -j "{T = Union(Z, Prod(T, T))}" -n 5 --terms
+
+    # Unrank the 13th labeled binary tree of size 4
+    fcombinat -j bintrees.json -n 4 --labeled --unrank 13
+
+    # Rank a specific object
+    fcombinat -j "{T = Union(Z, Prod(T, T))}" -n 4 --unrank 3 | \
+      xargs -I{} fcombinat -j "{T = Union(Z, Prod(T, T))}" -n 4 --rank "{}"
+
+    # Bijection test on permutations (labeled)
+    fcombinat -j "{P = Set(Cycle(Z))}" -n 6 --labeled --symbol P --bijection
+
+    # Enumerate all unlabeled integer partitions of size 5
+    fcombinat -j "{P = Set(Sequence(Z, card >= 1))}" -n 5 --enum-all
+
+TESTING
+    Requires the ecs-data submodule (git submodule update --init).
+
+    make test              # counting: compare first 10 coefficients (1075 specs)
+    make test-bijection    # bijection roundtrip: all 1075 specs
+    make test-unique       # uniqueness: no duplicate objects up to depth 5
+    make                   # all phases in parallel
+
+    Failures are logged to test_errors.log.
+
+    Configuration (config.mk):
+        NTERMS      number of terms to verify     (default: 10)
+        ENUM_DEPTH  max size for uniqueness test   (default: 5)
+
+BENCHMARKS
+    Measures CPU cycles for count/rank/unrank across several combinatorial structures.
+    Optionally compares against Maple (CAS) if available.
+
+    make bench
+
+    Results are written to exp/performance/results/ as CSV files.
+
+    Configuration (config.mk):
+        FCOMBINAT_BIN  path to the fcombinat binary  (default: ./fcombinat)
+        MAPLE_BIN      path to the Maple binary       (default: ~/maple2026/bin/maple)
+
+FIGURES
+    Generates bar-chart PDFs from the latest benchmark results.
+    Requires latexmk and a TeX distribution with pgfplots.
+
+    make figures       # rebuild all PDFs in exp/perf-operations/
+    make clean-figures # remove generated PDFs and TeX artifacts
+
+REPOSITORY LAYOUT
+    src/               C source (grammar, solver, API/CLI)
+    include/           Public headers
+    exp/
+      correctness/     ECS-based correctness test suite
+      performance/     Benchmark runner and results
+      perf-operations/ Figure generation (reshape + LaTeX)
+    config.mk          Binary paths and tuning knobs
+    LICENSE            MIT licence
