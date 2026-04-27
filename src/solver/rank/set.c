@@ -25,7 +25,7 @@ static int cmp_by_min_label(const void *a, const void *b) {
   return get_min_label(oa) - get_min_label(ob);
 }
 
-void rank_set_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
+void rank_set_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int depth) {
   if (strcmp(obj->name, "Set") != 0) {
     fmpz_set_si(res, -1);
     return;
@@ -90,7 +90,7 @@ void rank_set_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
 
   fmpz_t rank_A;
   fmpz_init(rank_A);
-  rank_e(ctx, child_expr, Comp_obj, rank_A);
+  rank_e(ctx, child_expr, Comp_obj, rank_A, depth);
 
   Expr tail_expr_struct = *expr;
   if (expr->restriction != NONE && expr->limit > 1) {
@@ -103,7 +103,7 @@ void rank_set_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
 
   fmpz_t rank_Rest;
   fmpz_init(rank_Rest);
-  rank_e(ctx, tail_expr, Rest_obj, rank_Rest);
+  rank_e(ctx, tail_expr, Rest_obj, rank_Rest, depth);
 
   fmpz_t count_A;
   fmpz_init(count_A);
@@ -171,7 +171,7 @@ void rank_set_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
  * Given a Set object, compute the global rank of each child, sort by global
  * rank (non-decreasing), then compute the rank using count_unl_set_restricted.
  */
-void rank_set_unlabeled(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
+void rank_set_unlabeled(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int depth) {
   if (strcmp(obj->name, "Set") != 0) {
     fmpz_set_si(res, -1);
     return;
@@ -232,7 +232,7 @@ void rank_set_unlabeled(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
     if (sz < 1 || sz > n) { child_grank[i] = 0; continue; }
     fmpz_t lr;
     fmpz_init(lr);
-    rank_e(ctx, child_expr, ch, lr);
+    rank_e(ctx, child_expr, ch, lr, depth);
     int local_r = (int)fmpz_get_si(lr);
     child_grank[i] = size_to_goffset[sz] + local_r;
     fmpz_clear(lr);

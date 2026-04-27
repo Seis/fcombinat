@@ -4,7 +4,7 @@
 #include "solver/math.h"
 
 char *unrank_seq_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
-                      int *labels) {
+                      int *labels, int depth) {
   Expr *child = (Expr *)expr->component;
   if (n == 0)
     return strdup("Seq()");
@@ -88,7 +88,7 @@ char *unrank_seq_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
   unrank_combination(subset_rank, n, chosen_k, labels, component_labels,
                      rest_labels);
 
-  char *res_A = unrank_e(ctx, child, chosen_k, rank_A, component_labels);
+  char *res_A = unrank_e(ctx, child, chosen_k, rank_A, component_labels, depth);
 
   Expr final_tail_expr_struct = *expr;
   if (expr->restriction != NONE && expr->limit > 1) {
@@ -103,7 +103,7 @@ char *unrank_seq_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
   if (n - chosen_k == 0) {
     res_S = strdup("Seq()");
   } else {
-    res_S = unrank_e(ctx, final_tail_expr, n - chosen_k, rank_Seq, rest_labels);
+    res_S = unrank_e(ctx, final_tail_expr, n - chosen_k, rank_Seq, rest_labels, depth);
   }
 
   char *res = malloc(strlen(res_A) + strlen(res_S) + 20);
@@ -136,7 +136,7 @@ char *unrank_seq_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
   return res;
 }
 
-char *unrank_seq_unlabeled(Context *ctx, Expr *expr, int n, fmpz_t rank) {
+char *unrank_seq_unlabeled(Context *ctx, Expr *expr, int n, fmpz_t rank, int depth) {
   Expr *child = (Expr *)expr->component;
   if (n == 0)
     return strdup("Seq()");
@@ -212,13 +212,13 @@ char *unrank_seq_unlabeled(Context *ctx, Expr *expr, int n, fmpz_t rank) {
   /* current_rank = rank_A * count_Seq + rank_Seq */
   fmpz_fdiv_qr(rank_A, rank_Seq, current_rank, count_Seq);
 
-  char *res_A = unrank_e(ctx, child, chosen_k, rank_A, NULL);
+  char *res_A = unrank_e(ctx, child, chosen_k, rank_A, NULL, depth);
 
   char *res_S = NULL;
   if (n - chosen_k == 0) {
     res_S = strdup("Seq()");
   } else {
-    res_S = unrank_e(ctx, final_tail_expr, n - chosen_k, rank_Seq, NULL);
+    res_S = unrank_e(ctx, final_tail_expr, n - chosen_k, rank_Seq, NULL, depth);
   }
 
   char *res = malloc(strlen(res_A) + strlen(res_S) + 20);

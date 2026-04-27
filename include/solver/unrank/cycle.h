@@ -4,6 +4,6 @@
 #include "solver/unrank/eval.h"
 
 char *unrank_cycle_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
-                        int *labels);
+                        int *labels, int depth);
 
 #endif

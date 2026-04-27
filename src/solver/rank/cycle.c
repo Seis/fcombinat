@@ -5,7 +5,7 @@
 
 #include "solver/math.h"
 
-void rank_cycle_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
+void rank_cycle_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int depth) {
   if (strcmp(obj->name, "Cycle") != 0) {
     fmpz_set_si(res, -1);
     return;
@@ -105,11 +105,11 @@ void rank_cycle_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
 
   fmpz_t rank_A;
   fmpz_init(rank_A);
-  rank_e(ctx, child_expr, Comp_obj, rank_A);
+  rank_e(ctx, child_expr, Comp_obj, rank_A, depth);
 
   fmpz_t rank_Rest;
   fmpz_init(rank_Rest);
-  rank_e(ctx, seq_expr, Rest_obj, rank_Rest);
+  rank_e(ctx, seq_expr, Rest_obj, rank_Rest, depth);
 
   fmpz_t count_A;
   fmpz_init(count_A);

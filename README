@@ -45,17 +45,30 @@ OPTIONS
             Target symbol to analyze or generate.
             If not provided, the first symbol in the grammar is used.
 
+    --order <lex|boustrophedon>
+            Ranking order used by --rank, --unrank, --enum-all, and --bijection.
+            Default: lex.
+
+            lex             Canonical lexicographic order derived from the
+                            combinatorial number system (default).
+
+            boustrophedon   Boustrophedonic order: at each level of the
+                            combinatorial decomposition tree, the enumeration
+                            direction alternates (even depths go left-to-right,
+                            odd depths go right-to-left). The same set of objects
+                            is produced as with lex; only the bijection changes.
+
 ACTIONS (mutually exclusive, one required)
     --terms
             Print coefficients c_0..c_N of the generating function.
 
     --rank <OBJ>
-            Compute the integer rank of the given object string.
-            Uses a fixed lexicographic ordering.
+            Compute the integer rank of the given object string in the
+            chosen --order (default: lex).
 
     --unrank <INT>
-            Generate the object at the given integer rank.
-            Uses a fixed lexicographic ordering.
+            Generate the object at the given integer rank in the
+            chosen --order (default: lex).
 
     --enum-all
             Enumerate and print all objects of size N.
@@ -79,18 +92,23 @@ EXAMPLES
     # Bijection test on permutations (labeled)
     fcombinat -j "{P = Set(Cycle(Z))}" -n 6 --labeled --symbol P --bijection
 
-    # Enumerate all unlabeled integer partitions of size 5
-    fcombinat -j "{P = Set(Sequence(Z, card >= 1))}" -n 5 --enum-all
+    # Bijection test using boustrophedon order
+    fcombinat -j "{P = Set(Cycle(Z))}" -n 6 --labeled --symbol P --bijection --order boustrophedon
+
+    # Enumerate all unlabeled integer partitions of size 5 in boustrophedon order
+    fcombinat -j "{P = Set(Sequence(Z, card >= 1))}" -n 5 --enum-all --order boustrophedon
 
 TESTING
     Requires the ecs-data submodule (git submodule update --init).
 
     make test              # counting: compare first 10 coefficients (1075 specs)
-    make test-bijection    # bijection roundtrip: all 1075 specs
+    make test-bijection    # bijection roundtrip (lex order): all 1075 specs
+    make test-bijection-boustrophedon  # bijection roundtrip (boustrophedon): all 1075 specs
     make test-unique       # uniqueness: no duplicate objects up to depth 5
     make                   # all phases in parallel
 
-    Failures are logged to test_errors.log.
+    Failures are printed immediately and logged to test_errors.log.
+    Each phase prints a single summary line on completion; passing tests are silent.
 
     Configuration (config.mk):
         NTERMS      number of terms to verify     (default: 10)

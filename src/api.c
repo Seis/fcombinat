@@ -59,7 +59,8 @@ fcomb_ctx_t fcomb_ctx_init(void) {
   ctx->symbol    = NULL;
   ctx->n         = -1;
   ctx->labeled   = 0;
-  ctx->seed = 0;
+  ctx->seed      = 0;
+  ctx->order     = ORDER_LEX;
   return ctx;
 }
 
@@ -119,6 +120,11 @@ void fcomb_ctx_set_seed(ulong seed, fcomb_ctx_t ctx) {
   ctx->seed = seed;
 }
 
+int fcomb_ctx_set_order(order_t order, fcomb_ctx_t ctx) {
+  ctx->order = order;
+  return 0;
+}
+
 /* ---- solve ---- */
 
 int fcomb_solve(fcomb_ctx_t ctx) {
@@ -147,11 +153,13 @@ void fcomb_rank(fmpz_t res, const char *obj_str, fcomb_ctx_t ctx) {
     fmpz_set_si(res, -1);
     return;
   }
+  ctx->solve_ctx->order = ctx->order;
   rank(ctx->solve_ctx, resolve_symbol(ctx), obj, res);
   free_object(obj);
 }
 
 char *fcomb_unrank(fmpz_t r, fcomb_ctx_t ctx) {
+  ctx->solve_ctx->order = ctx->order;
   return unrank(ctx->solve_ctx, resolve_symbol(ctx), ctx->n, r);
 }
 

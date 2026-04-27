@@ -3,14 +3,14 @@
 
 #include "solver/math.h"
 
-void rank_prod_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
+void rank_prod_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int depth) {
   ExprList *el = (ExprList *)expr->component;
   if (el->size == 0) {
     fmpz_zero(res);
     return;
   }
   if (el->size == 1) {
-    rank_e(ctx, el->components[0], obj, res);
+    rank_e(ctx, el->components[0], obj, res, depth);
     return;
   }
 
@@ -57,11 +57,11 @@ void rank_prod_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
 
   fmpz_t rank_A;
   fmpz_init(rank_A);
-  rank_e(ctx, A_expr, A_obj, rank_A);
+  rank_e(ctx, A_expr, A_obj, rank_A, depth);
 
   fmpz_t rank_B;
   fmpz_init(rank_B);
-  rank_e(ctx, B_expr, B_obj, rank_B);
+  rank_e(ctx, B_expr, B_obj, rank_B, depth);
 
   fmpz_t count_A;
   fmpz_init(count_A);
@@ -110,14 +110,14 @@ void rank_prod_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
   fmpz_clear(weight);
 }
 
-void rank_prod_unlabeled(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
+void rank_prod_unlabeled(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int depth) {
   ExprList *el = (ExprList *)expr->component;
   if (el->size == 0) {
     fmpz_zero(res);
     return;
   }
   if (el->size == 1) {
-    rank_e(ctx, el->components[0], obj, res);
+    rank_e(ctx, el->components[0], obj, res, depth);
     return;
   }
 
@@ -149,11 +149,11 @@ void rank_prod_unlabeled(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
 
   fmpz_t rank_A;
   fmpz_init(rank_A);
-  rank_e(ctx, A_expr, A_obj, rank_A);
+  rank_e(ctx, A_expr, A_obj, rank_A, depth);
 
   fmpz_t rank_B;
   fmpz_init(rank_B);
-  rank_e(ctx, B_expr, B_obj, rank_B);
+  rank_e(ctx, B_expr, B_obj, rank_B, depth);
 
   fmpz_t count_A;
   fmpz_init(count_A);

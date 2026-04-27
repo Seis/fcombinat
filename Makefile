@@ -39,6 +39,7 @@ $(TARGET): $(OBJ)
 test:
 	$(MAKE) -C exp/correctness FCOMBINAT_BIN="$(abspath $(FCOMBINAT_BIN))" test
 	$(MAKE) -C exp/correctness FCOMBINAT_BIN="$(abspath $(FCOMBINAT_BIN))" test-bijection
+	$(MAKE) -C exp/correctness FCOMBINAT_BIN="$(abspath $(FCOMBINAT_BIN))" test-bijection-boustrophedon
 	$(MAKE) -C exp/correctness FCOMBINAT_BIN="$(abspath $(FCOMBINAT_BIN))" test-unique
 
 test-all:

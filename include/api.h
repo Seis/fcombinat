@@ -13,6 +13,7 @@ struct fcomb_ctx_s {
   int       n;
   int       labeled;
   ulong     seed;     /* 0 = auto (time ^ pid) */
+  order_t   order;
 };
 typedef struct fcomb_ctx_s *fcomb_ctx_t;
 
@@ -26,8 +27,9 @@ int fcomb_ctx_set_spec_str (const char *spec,       fcomb_ctx_t ctx);
 int fcomb_ctx_set_spec_json(const char *path,       fcomb_ctx_t ctx);
 int fcomb_ctx_set_symbol   (const char *sym,        fcomb_ctx_t ctx);
 int fcomb_ctx_set_size     (int n,                  fcomb_ctx_t ctx);
-int  fcomb_ctx_set_labeled (int labeled, fcomb_ctx_t ctx);
-void fcomb_ctx_set_seed    (ulong seed,  fcomb_ctx_t ctx);
+int  fcomb_ctx_set_labeled (int labeled,   fcomb_ctx_t ctx);
+void fcomb_ctx_set_seed    (ulong seed,    fcomb_ctx_t ctx);
+int  fcomb_ctx_set_order   (order_t order, fcomb_ctx_t ctx);
 
 /* Solve: compute GF coefficients up to n.  Must be called before any
    operation below (except fcomb_boltzmann, which handles its own context). */

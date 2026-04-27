@@ -8,22 +8,23 @@
 #include "api.h"
 
 typedef struct {
-  char *input_spec;
-  char *symbol_arg;
-  char *unrank_str;
-  char *rank_str;
-  int   max_n;
-  int   is_labeled;
-  int   is_poly;
-  int   is_verbose;
-  int   is_unrank;
-  int   is_rank;
-  int   is_bijection;
-  int   is_draw;
-  int   is_boltzmann;
-  int   is_enum_all;
-  int   is_terms;
-  ulong seed;
+  char    *input_spec;
+  char    *symbol_arg;
+  char    *unrank_str;
+  char    *rank_str;
+  int      max_n;
+  int      is_labeled;
+  int      is_poly;
+  int      is_verbose;
+  int      is_unrank;
+  int      is_rank;
+  int      is_bijection;
+  int      is_draw;
+  int      is_boltzmann;
+  int      is_enum_all;
+  int      is_terms;
+  ulong    seed;
+  order_t  order;
 } Config;
 
 static void print_usage(char *prog) {
@@ -35,6 +36,7 @@ static void print_usage(char *prog) {
   printf("  -v, --verbose                     Verbose output\n");
   printf("  --symbol <S>                      Target symbol (default: first rule)\n");
   printf("  --seed <N>                        RNG seed for --draw and --boltzmann (0 = random)\n");
+  printf("  --order <lex|boustrophedon>       Ranking order (default: lex)\n");
   printf("\nActions:\n");
   printf("  --terms                           Print first N coefficients (default)\n");
   printf("  --rank <OBJ>                      Compute rank of object string\n");
@@ -71,6 +73,8 @@ static fcomb_ctx_t build_ctx(Config *cfg) {
 
   if (cfg->seed)
     fcomb_ctx_set_seed(cfg->seed, ctx);
+
+  fcomb_ctx_set_order(cfg->order, ctx);
 
   return ctx;
 }
@@ -289,7 +293,7 @@ static int run_bijection(fcomb_ctx_t ctx, Config *cfg) {
         fmpz_fprint(stderr, r_in);
         fprintf(stderr, "\n");
         failed = 1;
-        continue;
+        goto bijection_done;
       }
 
       fcomb_rank(r_out, str, ctx);
@@ -309,6 +313,7 @@ static int run_bijection(fcomb_ctx_t ctx, Config *cfg) {
     }
   }
 
+bijection_done:
   fmpz_clear(count);
   fmpz_clear(r_in);
   fmpz_clear(r_out);
@@ -337,11 +342,12 @@ int main(int argc, char *argv[]) {
       {"terms",      no_argument,       0, 't'},
       {"bijection",  no_argument,       0, 'b'},
       {"seed",       required_argument, 0, 's'},
+      {"order",      required_argument, 0, 'O'},
       {0, 0, 0, 0},
   };
 
   int opt, opt_idx = 0, action = 0;
-  while ((opt = getopt_long(argc, argv, "g:j:n:lLPvS:u:r:dBetbs:",
+  while ((opt = getopt_long(argc, argv, "g:j:n:lLPvS:u:r:dBetbs:O:",
                             long_opts, &opt_idx)) != -1) {
     switch (opt) {
     case 'g': case 'j': cfg.input_spec = optarg; break;
@@ -375,6 +381,16 @@ int main(int argc, char *argv[]) {
       }
       break;
     }
+    case 'O':
+      if (strcmp(optarg, "boustrophedon") == 0)
+        cfg.order = ORDER_BOUSTROPHEDON;
+      else if (strcmp(optarg, "lex") == 0)
+        cfg.order = ORDER_LEX;
+      else {
+        fprintf(stderr, "Error: --order must be 'lex' or 'boustrophedon'\n");
+        return 1;
+      }
+      break;
     default:   print_usage(argv[0]); return 1;
     }
   }

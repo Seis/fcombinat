@@ -4,12 +4,12 @@
 #include "solver/math.h"
 
 char *unrank_prod_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
-                       int *labels) {
+                       int *labels, int depth) {
   ExprList *el = (ExprList *)expr->component;
   if (el->size == 0)
-    return unrank_e(ctx, NULL, n, rank, labels);
+    return unrank_e(ctx, NULL, n, rank, labels, depth);
   if (el->size == 1)
-    return unrank_e(ctx, el->components[0], n, rank, labels);
+    return unrank_e(ctx, el->components[0], n, rank, labels, depth);
 
   Expr *A_expr = el->components[0];
 
@@ -83,8 +83,8 @@ char *unrank_prod_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
   unrank_combination(subset_rank, n, chosen_k, labels, selected_labels,
                      other_labels);
 
-  char *res_A = unrank_e(ctx, A_expr, chosen_k, rank_A, selected_labels);
-  char *res_B = unrank_e(ctx, B_expr, n - chosen_k, rank_B, other_labels);
+  char *res_A = unrank_e(ctx, A_expr, chosen_k, rank_A, selected_labels, depth);
+  char *res_B = unrank_e(ctx, B_expr, n - chosen_k, rank_B, other_labels, depth);
 
   int len = strlen(res_A) + strlen(res_B) + 10;
   char *res = malloc(len);
@@ -110,12 +110,13 @@ char *unrank_prod_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
   return res;
 }
 
-char *unrank_prod_unlabeled(Context *ctx, Expr *expr, int n, fmpz_t rank) {
+char *unrank_prod_unlabeled(Context *ctx, Expr *expr, int n, fmpz_t rank,
+                             int depth) {
   ExprList *el = (ExprList *)expr->component;
   if (el->size == 0)
-    return unrank_e(ctx, NULL, n, rank, NULL);
+    return unrank_e(ctx, NULL, n, rank, NULL, depth);
   if (el->size == 1)
-    return unrank_e(ctx, el->components[0], n, rank, NULL);
+    return unrank_e(ctx, el->components[0], n, rank, NULL, depth);
 
   Expr *A_expr = el->components[0];
 
@@ -172,8 +173,8 @@ char *unrank_prod_unlabeled(Context *ctx, Expr *expr, int n, fmpz_t rank) {
   /* current_rank encodes: rank_A * count_B + rank_B */
   fmpz_fdiv_qr(rank_A, rank_B, current_rank, count_B);
 
-  char *res_A = unrank_e(ctx, A_expr, chosen_k, rank_A, NULL);
-  char *res_B = unrank_e(ctx, B_expr, n - chosen_k, rank_B, NULL);
+  char *res_A = unrank_e(ctx, A_expr, chosen_k, rank_A, NULL, depth);
+  char *res_B = unrank_e(ctx, B_expr, n - chosen_k, rank_B, NULL, depth);
 
   int len = strlen(res_A) + strlen(res_B) + 10;
   char *res = malloc(len);

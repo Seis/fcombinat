@@ -4,7 +4,7 @@
 #include "solver/math.h"
 
 char *unrank_cycle_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
-                        int *labels) {
+                        int *labels, int depth) {
   Expr *child = (Expr *)expr->component;
   if (n == 0)
     return strdup("Cycle()");
@@ -88,13 +88,13 @@ char *unrank_cycle_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
   unrank_combination(subset_rank, n_rem, chosen_k - 1, remaining_labels,
                      &component_labels[1], rest_labels);
 
-  char *res_A = unrank_e(ctx, child, chosen_k, rank_A, component_labels);
+  char *res_A = unrank_e(ctx, child, chosen_k, rank_A, component_labels, depth);
 
   char *res_Seq = NULL;
   if (n - chosen_k == 0) {
-    res_Seq = strdup("Seq()"); // Empty sequence
+    res_Seq = strdup("Seq()");
   } else {
-    res_Seq = unrank_e(ctx, seq_expr, n - chosen_k, rank_Seq, rest_labels);
+    res_Seq = unrank_e(ctx, seq_expr, n - chosen_k, rank_Seq, rest_labels, depth);
   }
 
   char *res = malloc(strlen(res_A) + strlen(res_Seq) + 20);

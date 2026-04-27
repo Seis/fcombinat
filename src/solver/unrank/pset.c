@@ -4,7 +4,7 @@
 #include "solver/math.h"
 
 char *unrank_powerset_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
-                           int *labels) {
+                           int *labels, int depth) {
   Expr *child = (Expr *)expr->component;
   if (n == 0)
     return strdup("PowerSet()");
@@ -79,13 +79,13 @@ char *unrank_powerset_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
   unrank_combination(subset_rank, n_rem, chosen_k - 1, remaining_labels,
                      &component_labels[1], rest_labels);
 
-  char *res_A = unrank_e(ctx, child, chosen_k, rank_A, component_labels);
+  char *res_A = unrank_e(ctx, child, chosen_k, rank_A, component_labels, depth);
 
   char *res_P = NULL;
   if (n - chosen_k == 0) {
     res_P = strdup("");
   } else {
-    res_P = unrank_e(ctx, tail_expr, n - chosen_k, rank_P, rest_labels);
+    res_P = unrank_e(ctx, tail_expr, n - chosen_k, rank_P, rest_labels, depth);
   }
 
   char *res = malloc(strlen(res_A) + (res_P ? strlen(res_P) : 0) + 20);
@@ -125,7 +125,7 @@ char *unrank_powerset_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
  * (PowerSet = set of distinct A-structures, strictly increasing global ranks).
  * Handles cardinality restrictions via count_unl_pset_restricted.
  */
-char *unrank_pset_unlabeled(Context *ctx, Expr *expr, int n, fmpz_t rank) {
+char *unrank_pset_unlabeled(Context *ctx, Expr *expr, int n, fmpz_t rank, int depth) {
   Expr *child = (Expr *)expr->component;
   if (n == 0)
     return strdup("PowerSet()");
@@ -224,7 +224,7 @@ char *unrank_pset_unlabeled(Context *ctx, Expr *expr, int n, fmpz_t rank) {
     int lr = g_to_local[gi];
     fmpz_t local_rank;
     fmpz_init_set_si(local_rank, lr);
-    parts[i] = unrank_e(ctx, child, sz, local_rank, NULL);
+    parts[i] = unrank_e(ctx, child, sz, local_rank, NULL, depth);
     fmpz_clear(local_rank);
     total_len += strlen(parts[i]) + 2;
   }

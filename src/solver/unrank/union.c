@@ -2,7 +2,7 @@
 
 
 char *unrank_union_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
-                        int *labels) {
+                        int *labels, int depth) {
   ExprList *el = (ExprList *)expr->component;
   fmpz_t count;
   fmpz_init(count);
@@ -13,7 +13,7 @@ char *unrank_union_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
     get_expr_count(count, ctx, el->components[i], n);
     if (fmpz_cmp(current_rank, count) < 0) {
       char *child_res =
-          unrank_e(ctx, el->components[i], n, current_rank, labels);
+          unrank_e(ctx, el->components[i], n, current_rank, labels, depth);
 
       char *tagged_res = malloc(strlen(child_res) + 30);
       sprintf(tagged_res, "Union_%d(%s)", i, child_res);

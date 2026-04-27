@@ -1,7 +1,7 @@
 #include "solver/rank/union.h"
 
 
-void rank_union_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
+void rank_union_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int depth) {
   ExprList *el = (ExprList *)expr->component;
   int n = get_obj_size(obj);
 
@@ -67,7 +67,7 @@ void rank_union_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
     }
 
     if (match || branch_tag == i) {
-      rank_e(ctx, child, inner_obj, sub_rank);
+      rank_e(ctx, child, inner_obj, sub_rank, depth);
       if (fmpz_sgn(sub_rank) >= 0) {
         fmpz_add(res, accum, sub_rank);
         found = 1;

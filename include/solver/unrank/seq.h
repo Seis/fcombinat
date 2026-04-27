@@ -4,8 +4,9 @@
 #include "solver/unrank/eval.h"
 
 char *unrank_seq_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
-                      int *labels);
+                      int *labels, int depth);
 
-char *unrank_seq_unlabeled(Context *ctx, Expr *expr, int n, fmpz_t rank);
+char *unrank_seq_unlabeled(Context *ctx, Expr *expr, int n, fmpz_t rank,
+                            int depth);
 
 #endif

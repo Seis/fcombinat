@@ -11,10 +11,16 @@ typedef struct {
   fmpz_poly_t poly;
 } Entry;
 
+typedef enum {
+  ORDER_LEX           = 0,
+  ORDER_BOUSTROPHEDON = 1
+} order_t;
+
 typedef struct {
-  Entry *entries;
-  int num_entries;
-  int is_labeled;
+  Entry   *entries;
+  int      num_entries;
+  int      is_labeled;
+  order_t  order;
 } Context;
 
 void context_init(Context *ctx);

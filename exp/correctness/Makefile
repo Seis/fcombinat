@@ -11,17 +11,17 @@ ERROR_LOG  = $(abspath ../../test_errors.log)
 # Only phase-level targets are PHONY.
 # Individual check-X / bijection-X / unique-X / draw-X / boltzmann-X targets
 # are NOT listed here — doing so would shadow the pattern rules below.
-.PHONY: all test test-bijection test-unique test-recursive_draw test-boltzmann generate-json clean clean-errors
+.PHONY: all test test-bijection test-bijection-boustrophedon test-unique test-recursive_draw test-boltzmann generate-json clean clean-errors
 TOTAL := $(words $(TEST_IDS))
 
-all: clean-errors test test-bijection test-unique test-recursive_draw test-boltzmann clean
+all: clean-errors test test-bijection test-bijection-boustrophedon test-unique test-recursive_draw test-boltzmann clean
 	@if [ -f "$(ERROR_LOG)" ]; then \
 		NERR=$$(wc -l < "$(ERROR_LOG)"); \
 		echo ""; \
 		echo "=== correctness: $$NERR error(s) recorded in test_errors.log ==="; \
 	else \
 		echo ""; \
-		echo "=== correctness: all $(TOTAL) tests x 5 phases passed ==="; \
+		echo "=== correctness: all $(TOTAL) tests x 6 phases passed ==="; \
 	fi
 
 generate-json:
@@ -35,52 +35,68 @@ clean-errors:
 # --no-print-directory suppresses "Entering/Leaving directory" noise.
 test:
 	@$(MAKE) --no-print-directory -j$(JOBS) $(addprefix check-,$(TEST_IDS))
+	@echo "=== check: $(TOTAL) specs done ==="
 
 test-bijection:
 	@$(MAKE) --no-print-directory -j$(JOBS) $(addprefix bijection-,$(TEST_IDS))
+	@echo "=== bijection (lex): $(TOTAL) specs done ==="
+
+test-bijection-boustrophedon:
+	@$(MAKE) --no-print-directory -j$(JOBS) $(addprefix bijection-boustrophedon-,$(TEST_IDS))
+	@echo "=== bijection (boustrophedon): $(TOTAL) specs done ==="
 
 test-unique:
 	@$(MAKE) --no-print-directory -j$(JOBS) $(addprefix unique-,$(TEST_IDS))
+	@echo "=== unique: $(TOTAL) specs done ==="
 
 test-recursive_draw:
 	@$(MAKE) --no-print-directory -j$(JOBS) $(addprefix recursive_draw-,$(TEST_IDS))
+	@echo "=== recursive_draw: $(TOTAL) specs done ==="
 
 test-boltzmann:
 	@$(MAKE) --no-print-directory -j$(JOBS) $(addprefix boltzmann-,$(TEST_IDS))
+	@echo "=== boltzmann: $(TOTAL) specs done ==="
 
 # Verification
 check-%:
 	@scripts/setup_test.sh $* $(ECS_DATA) $(NTERMS)
 	@scripts/run_fcombinat.sh build/test_$*.json $(TARGET) verify $(NTERMS) | cmp -s build/test_$*.expected - \
-		&& echo "check $*: ok" || echo "check $*: FAIL" | tee -a "$(ERROR_LOG)"
+		|| echo "check $*: FAIL" | tee -a "$(ERROR_LOG)"
 	@rm -f build/test_$*.json build/test_$*.expected
 
-# Bijection
+# Bijection (lex order)
 bijection-%:
 	@scripts/setup_test.sh $* $(ECS_DATA) $(NTERMS)
 	@scripts/run_fcombinat.sh build/test_$*.json $(TARGET) bijection $(NTERMS) \
-		&& echo "bijection $*: ok" || echo "bijection $*: FAIL" | tee -a "$(ERROR_LOG)"
+		|| echo "bijection $*: FAIL" | tee -a "$(ERROR_LOG)"
+	@rm -f build/test_$*.json build/test_$*.expected
+
+# Bijection (boustrophedon order)
+bijection-boustrophedon-%:
+	@scripts/setup_test.sh $* $(ECS_DATA) $(NTERMS)
+	@scripts/run_fcombinat.sh build/test_$*.json $(TARGET) bijection $(NTERMS) boustrophedon \
+		|| echo "bijection-boustrophedon $*: FAIL" | tee -a "$(ERROR_LOG)"
 	@rm -f build/test_$*.json build/test_$*.expected
 
 # Uniqueness
 unique-%:
 	@scripts/setup_test.sh $* $(ECS_DATA) $(NTERMS)
 	@scripts/test_uniqueness.sh build/test_$*.json $(TARGET) $(ENUM_DEPTH) \
-		&& echo "unique $*: ok" || echo "unique $*: FAIL" | tee -a "$(ERROR_LOG)"
+		|| echo "unique $*: FAIL" | tee -a "$(ERROR_LOG)"
 	@rm -f build/test_$*.json build/test_$*.expected
 
 # Recursive draw roundtrip
 recursive_draw-%:
 	@scripts/setup_test.sh $* $(ECS_DATA) $(NTERMS)
 	@scripts/test_draw.sh build/test_$*.json $(TARGET) draw 10 \
-		&& echo "recursive_draw $*: ok" || echo "recursive_draw $*: FAIL" | tee -a "$(ERROR_LOG)"
+		|| echo "recursive_draw $*: FAIL" | tee -a "$(ERROR_LOG)"
 	@rm -f build/test_$*.json build/test_$*.expected
 
 # Boltzmann roundtrip
 boltzmann-%:
 	@scripts/setup_test.sh $* $(ECS_DATA) $(NTERMS)
 	@scripts/test_draw.sh build/test_$*.json $(TARGET) boltzmann 5 \
-		&& echo "boltzmann $*: ok" || echo "boltzmann $*: FAIL" | tee -a "$(ERROR_LOG)"
+		|| echo "boltzmann $*: FAIL" | tee -a "$(ERROR_LOG)"
 	@rm -f build/test_$*.json build/test_$*.expected
 
 # Per-test JSON file rule (used by generate-json)

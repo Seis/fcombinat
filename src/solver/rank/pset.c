@@ -3,7 +3,7 @@
 #include <string.h>
 #include "solver/math.h"
 
-void rank_powerset_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
+void rank_powerset_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int depth) {
   if (strcmp(obj->name, "PowerSet") != 0) {
     fmpz_set_si(res, -1);
     return;
@@ -71,11 +71,11 @@ void rank_powerset_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
 
   fmpz_t rank_A;
   fmpz_init(rank_A);
-  rank_e(ctx, child_expr, Comp_obj, rank_A);
+  rank_e(ctx, child_expr, Comp_obj, rank_A, depth);
 
   fmpz_t rank_Rest;
   fmpz_init(rank_Rest);
-  rank_e(ctx, tail_expr, Rest_obj, rank_Rest);
+  rank_e(ctx, tail_expr, Rest_obj, rank_Rest, depth);
 
   fmpz_t count_A;
   fmpz_init(count_A);
@@ -125,7 +125,7 @@ void rank_powerset_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
   fmpz_clear(weight);
 }
 
-void rank_pset_unlabeled(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
+void rank_pset_unlabeled(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int depth) {
   if (strcmp(obj->name, "PowerSet") != 0) {
     fmpz_set_si(res, -1);
     return;
@@ -184,7 +184,7 @@ void rank_pset_unlabeled(Context *ctx, Expr *expr, Object *obj, fmpz_t res) {
     if (sz < 1 || sz > n) { child_grank[i] = 0; continue; }
     fmpz_t lr;
     fmpz_init(lr);
-    rank_e(ctx, child_expr, ch, lr);
+    rank_e(ctx, child_expr, ch, lr, depth);
     int local_r = (int)fmpz_get_si(lr);
     child_grank[i] = size_to_goffset[sz] + local_r;
     fmpz_clear(lr);
