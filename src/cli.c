@@ -23,6 +23,7 @@ typedef struct {
   int      is_boltzmann;
   int      is_enum_all;
   int      is_terms;
+  int      no_cache;
   ulong    seed;
   order_t  order;
 } Config;
@@ -37,6 +38,7 @@ static void print_usage(char *prog) {
   printf("  --symbol <S>                      Target symbol (default: first rule)\n");
   printf("  --seed <N>                        RNG seed for --draw and --boltzmann (0 = random)\n");
   printf("  --order <lex|boustrophedon>       Ranking order (default: lex)\n");
+  printf("  --no-cache                        Disable all caching optimizations\n");
   printf("\nActions:\n");
   printf("  --terms                           Print first N coefficients (default)\n");
   printf("  --rank <OBJ>                      Compute rank of object string\n");
@@ -75,6 +77,7 @@ static fcomb_ctx_t build_ctx(Config *cfg) {
     fcomb_ctx_set_seed(cfg->seed, ctx);
 
   fcomb_ctx_set_order(cfg->order, ctx);
+  fcomb_ctx_set_cache_flags(cfg->no_cache ? 0 : FCOMB_CACHE_ALL, ctx);
 
   return ctx;
 }
@@ -343,11 +346,12 @@ int main(int argc, char *argv[]) {
       {"bijection",  no_argument,       0, 'b'},
       {"seed",       required_argument, 0, 's'},
       {"order",      required_argument, 0, 'O'},
+      {"no-cache",   no_argument,       0, 'C'},
       {0, 0, 0, 0},
   };
 
   int opt, opt_idx = 0, action = 0;
-  while ((opt = getopt_long(argc, argv, "g:j:n:lLPvS:u:r:dBetbs:O:",
+  while ((opt = getopt_long(argc, argv, "g:j:n:lLPvS:u:r:dBetbs:O:C",
                             long_opts, &opt_idx)) != -1) {
     switch (opt) {
     case 'g': case 'j': cfg.input_spec = optarg; break;
@@ -391,6 +395,7 @@ int main(int argc, char *argv[]) {
         return 1;
       }
       break;
+    case 'C':  cfg.no_cache = 1; break;
     default:   print_usage(argv[0]); return 1;
     }
   }

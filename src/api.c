@@ -54,13 +54,14 @@ fcomb_ctx_t fcomb_ctx_init(void) {
   fcomb_ctx_t ctx = malloc(sizeof(struct fcomb_ctx_s));
   if (!ctx)
     return NULL;
-  ctx->spec      = NULL;
-  ctx->solve_ctx = NULL;
-  ctx->symbol    = NULL;
-  ctx->n         = -1;
-  ctx->labeled   = 0;
-  ctx->seed      = 0;
-  ctx->order     = ORDER_LEX;
+  ctx->spec        = NULL;
+  ctx->solve_ctx   = NULL;
+  ctx->symbol      = NULL;
+  ctx->n           = -1;
+  ctx->labeled     = 0;
+  ctx->seed        = 0;
+  ctx->order       = ORDER_LEX;
+  ctx->cache_flags = FCOMB_CACHE_ALL;
   return ctx;
 }
 
@@ -125,6 +126,10 @@ int fcomb_ctx_set_order(order_t order, fcomb_ctx_t ctx) {
   return 0;
 }
 
+void fcomb_ctx_set_cache_flags(int flags, fcomb_ctx_t ctx) {
+  ctx->cache_flags = flags;
+}
+
 /* ---- solve ---- */
 
 int fcomb_solve(fcomb_ctx_t ctx) {
@@ -132,7 +137,7 @@ int fcomb_solve(fcomb_ctx_t ctx) {
     return 1;
   drop_solve_ctx(ctx);
   /* n+1 so the coefficient at index n is always accessible */
-  ctx->solve_ctx = solve_spec(ctx->spec, ctx->n + 1, ctx->labeled);
+  ctx->solve_ctx = solve_spec(ctx->spec, ctx->n + 1, ctx->labeled, ctx->cache_flags);
   return ctx->solve_ctx ? 0 : 1;
 }
 
@@ -187,7 +192,7 @@ char *fcomb_boltzmann(int tolerance, int max_attempts, fcomb_ctx_t ctx) {
       max_attempts = 100000;
   }
 
-  Context *bctx = solve_spec(ctx->spec, max_n, ctx->labeled);
+  Context *bctx = solve_spec(ctx->spec, max_n, ctx->labeled, ctx->cache_flags);
   if (!bctx)
     return NULL;
 

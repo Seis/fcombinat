@@ -1,6 +1,7 @@
 #include "solver/unrank/prod.h"
 
 #include <string.h>
+#include "solver/count/eval.h"
 #include "solver/math.h"
 
 char *unrank_prod_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
@@ -39,10 +40,8 @@ char *unrank_prod_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
     get_expr_count(count_A, ctx, A_expr, k);
     get_expr_count(count_B, ctx, B_expr, n - k);
     binom_ui(bin, n, k);
-
     fmpz_mul(weight, count_A, count_B);
     fmpz_mul(weight, weight, bin);
-
     if (fmpz_cmp(current_rank, weight) < 0) {
       chosen_k = k;
       break;
@@ -145,7 +144,6 @@ char *unrank_prod_unlabeled(Context *ctx, Expr *expr, int n, fmpz_t rank,
     get_expr_count(count_A, ctx, A_expr, k);
     get_expr_count(count_B, ctx, B_expr, n - k);
     fmpz_mul(block, count_A, count_B);
-
     if (fmpz_cmp(current_rank, block) < 0) {
       chosen_k = k;
       break;

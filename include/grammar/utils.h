@@ -1,6 +1,9 @@
 #ifndef GRAMMAR_UTILS_H
 #define GRAMMAR_UTILS_H
 
+#define FCOMB_CACHE_POLY_HOIST  (1 << 0)
+#define FCOMB_CACHE_ALL         (FCOMB_CACHE_POLY_HOIST)
+
 #include <flint/fmpz_poly.h>
 
 #include "grammar/absyn.h"
@@ -21,13 +24,14 @@ typedef struct {
   int      num_entries;
   int      is_labeled;
   order_t  order;
+  int      cache_flags;
 } Context;
 
 void context_init(Context *ctx);
 void context_clear(Context *ctx);
 fmpz_poly_struct *get_poly(Context *ctx, char *name);
 
-Context *solve_spec(Spec *g, int max_n, int is_labeled);
+Context *solve_spec(Spec *g, int max_n, int is_labeled, int cache_flags);
 
 void get_expr_count(fmpz_t res, Context *ctx, Expr *expr, int n);
 

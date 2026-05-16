@@ -1,6 +1,6 @@
 #include "solver/unrank/seq.h"
 
-
+#include "solver/count/eval.h"
 #include "solver/math.h"
 
 char *unrank_seq_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
@@ -29,27 +29,25 @@ char *unrank_seq_expr(Context *ctx, Expr *expr, int n, fmpz_t rank,
   }
   Expr *tail_expr = &tail_expr_struct;
 
+  Expr k_tail_expr_struct = *expr;
+  if (expr->restriction != NONE) {
+    if (expr->restriction == GREATER && expr->limit == 0) {
+      k_tail_expr_struct.restriction = NONE;
+      k_tail_expr_struct.limit = 0;
+    } else {
+      k_tail_expr_struct.limit = expr->limit - 1;
+    }
+  }
+  Expr *k_tail_expr = &k_tail_expr_struct;
+
   int chosen_k = -1;
 
   for (int k = 1; k <= n; k++) {
-    Expr k_tail_expr_struct = *expr;
-    if (expr->restriction != NONE) {
-      if (expr->restriction == GREATER && expr->limit == 0) {
-        k_tail_expr_struct.restriction = NONE;
-        k_tail_expr_struct.limit = 0;
-      } else {
-        k_tail_expr_struct.limit = expr->limit - 1;
-      }
-    }
-    Expr *k_tail_expr = &k_tail_expr_struct;
-
     get_expr_count(count_A, ctx, child, k);
     get_expr_count(count_Seq, ctx, k_tail_expr, n - k);
     binom_ui(bin, n, k);
-
     fmpz_mul(weight, count_A, count_Seq);
     fmpz_mul(weight, weight, bin);
-
     if (fmpz_cmp(current_rank, weight) < 0) {
       chosen_k = k;
       break;
@@ -160,24 +158,23 @@ char *unrank_seq_unlabeled(Context *ctx, Expr *expr, int n, fmpz_t rank, int dep
   }
   Expr *tail_expr = &tail_expr_struct;
 
+  Expr k_tail_expr_struct = *expr;
+  if (expr->restriction != NONE) {
+    if (expr->restriction == GREATER && expr->limit == 0) {
+      k_tail_expr_struct.restriction = NONE;
+      k_tail_expr_struct.limit = 0;
+    } else {
+      k_tail_expr_struct.limit = expr->limit - 1;
+    }
+  }
+  Expr *k_tail_expr = &k_tail_expr_struct;
+
   int chosen_k = -1;
 
   for (int k = 1; k <= n; k++) {
-    Expr k_tail_expr_struct = *expr;
-    if (expr->restriction != NONE) {
-      if (expr->restriction == GREATER && expr->limit == 0) {
-        k_tail_expr_struct.restriction = NONE;
-        k_tail_expr_struct.limit = 0;
-      } else {
-        k_tail_expr_struct.limit = expr->limit - 1;
-      }
-    }
-    Expr *k_tail_expr = &k_tail_expr_struct;
-
     get_expr_count(count_A, ctx, child, k);
     get_expr_count(count_Seq, ctx, k_tail_expr, n - k);
     fmpz_mul(block, count_A, count_Seq);
-
     if (fmpz_cmp(current_rank, block) < 0) {
       chosen_k = k;
       break;

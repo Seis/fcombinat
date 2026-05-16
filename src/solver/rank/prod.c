@@ -1,6 +1,6 @@
 #include "solver/rank/prod.h"
 
-
+#include "solver/count/eval.h"
 #include "solver/math.h"
 
 void rank_prod_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int depth) {
@@ -67,33 +67,55 @@ void rank_prod_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int depth
   fmpz_init(count_A);
   fmpz_t count_B;
   fmpz_init(count_B);
-  get_expr_count(count_A, ctx, A_expr, k);
-  get_expr_count(count_B, ctx, B_expr, n - k);
 
   fmpz_t term1;
   fmpz_init(term1);
-  fmpz_mul(term1, count_A, count_B);
-  fmpz_mul(term1, term1, subset_rank);
-
   fmpz_t term2;
   fmpz_init(term2);
-  fmpz_mul(term2, rank_A, count_B);
-
-  fmpz_add(res, term1, term2);
-  fmpz_add(res, res, rank_B);
-
   fmpz_t bin;
   fmpz_init(bin);
   fmpz_t weight;
   fmpz_init(weight);
 
-  for (int i = 0; i < k; i++) {
-    get_expr_count(count_A, ctx, A_expr, i);
-    get_expr_count(count_B, ctx, B_expr, n - i);
-    fmpz_bin_uiui(bin, n, i);
-    fmpz_mul(weight, count_A, count_B);
-    fmpz_mul(weight, weight, bin);
-    fmpz_add(res, res, weight);
+  if (k > 0 && (ctx->cache_flags & FCOMB_CACHE_POLY_HOIST)) {
+    fmpz_poly_t poly_A, poly_B;
+    fmpz_poly_init(poly_A);
+    fmpz_poly_init(poly_B);
+    compute_e(ctx, A_expr, poly_A, k, ctx->is_labeled);
+    compute_e(ctx, B_expr, poly_B, n, ctx->is_labeled);
+    fmpz_poly_get_coeff_fmpz(count_A, poly_A, k);
+    fmpz_poly_get_coeff_fmpz(count_B, poly_B, n - k);
+    fmpz_mul(term1, count_A, count_B);
+    fmpz_mul(term1, term1, subset_rank);
+    fmpz_mul(term2, rank_A, count_B);
+    fmpz_add(res, term1, term2);
+    fmpz_add(res, res, rank_B);
+    for (int i = 0; i < k; i++) {
+      fmpz_poly_get_coeff_fmpz(count_A, poly_A, i);
+      fmpz_poly_get_coeff_fmpz(count_B, poly_B, n - i);
+      fmpz_bin_uiui(bin, n, i);
+      fmpz_mul(weight, count_A, count_B);
+      fmpz_mul(weight, weight, bin);
+      fmpz_add(res, res, weight);
+    }
+    fmpz_poly_clear(poly_A);
+    fmpz_poly_clear(poly_B);
+  } else {
+    get_expr_count(count_A, ctx, A_expr, k);
+    get_expr_count(count_B, ctx, B_expr, n - k);
+    fmpz_mul(term1, count_A, count_B);
+    fmpz_mul(term1, term1, subset_rank);
+    fmpz_mul(term2, rank_A, count_B);
+    fmpz_add(res, term1, term2);
+    fmpz_add(res, res, rank_B);
+    for (int i = 0; i < k; i++) {
+      get_expr_count(count_A, ctx, A_expr, i);
+      get_expr_count(count_B, ctx, B_expr, n - i);
+      fmpz_bin_uiui(bin, n, i);
+      fmpz_mul(weight, count_A, count_B);
+      fmpz_mul(weight, weight, bin);
+      fmpz_add(res, res, weight);
+    }
   }
 
   free(b_list);
@@ -159,8 +181,6 @@ void rank_prod_unlabeled(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int 
   fmpz_init(count_A);
   fmpz_t count_B;
   fmpz_init(count_B);
-  get_expr_count(count_A, ctx, A_expr, k);
-  get_expr_count(count_B, ctx, B_expr, n - k);
 
   /* accumulated = sum_{i=0}^{k-1} f_A(i) * f_B(n-i) */
   fmpz_t accumulated;
@@ -173,11 +193,30 @@ void rank_prod_unlabeled(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int 
   fmpz_t tmp;
   fmpz_init(tmp);
 
-  for (int i = 0; i < k; i++) {
-    get_expr_count(ca, ctx, A_expr, i);
-    get_expr_count(cb, ctx, B_expr, n - i);
-    fmpz_mul(tmp, ca, cb);
-    fmpz_add(accumulated, accumulated, tmp);
+  if (k > 0 && (ctx->cache_flags & FCOMB_CACHE_POLY_HOIST)) {
+    fmpz_poly_t poly_A, poly_B;
+    fmpz_poly_init(poly_A);
+    fmpz_poly_init(poly_B);
+    compute_e(ctx, A_expr, poly_A, k, ctx->is_labeled);
+    compute_e(ctx, B_expr, poly_B, n, ctx->is_labeled);
+    fmpz_poly_get_coeff_fmpz(count_B, poly_B, n - k);
+    for (int i = 0; i < k; i++) {
+      fmpz_poly_get_coeff_fmpz(ca, poly_A, i);
+      fmpz_poly_get_coeff_fmpz(cb, poly_B, n - i);
+      fmpz_mul(tmp, ca, cb);
+      fmpz_add(accumulated, accumulated, tmp);
+    }
+    fmpz_poly_clear(poly_A);
+    fmpz_poly_clear(poly_B);
+  } else {
+    get_expr_count(count_A, ctx, A_expr, k);
+    get_expr_count(count_B, ctx, B_expr, n - k);
+    for (int i = 0; i < k; i++) {
+      get_expr_count(ca, ctx, A_expr, i);
+      get_expr_count(cb, ctx, B_expr, n - i);
+      fmpz_mul(tmp, ca, cb);
+      fmpz_add(accumulated, accumulated, tmp);
+    }
   }
 
   /* res = accumulated + rank_A * count_B + rank_B */

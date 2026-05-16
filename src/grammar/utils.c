@@ -36,7 +36,7 @@ void get_expr_count(fmpz_t res, Context *ctx, Expr *expr, int n) {
   fmpz_poly_clear(tmp);
 }
 
-Context *solve_spec(Spec *g, int max_n, int is_labeled) {
+Context *solve_spec(Spec *g, int max_n, int is_labeled, int cache_flags) {
   if (g->type == ISERROR)
     return NULL;
 
@@ -45,7 +45,8 @@ Context *solve_spec(Spec *g, int max_n, int is_labeled) {
   Context *ctx = malloc(sizeof(Context));
   ctx->num_entries = sl->size;
   ctx->entries = malloc(sizeof(Entry) * ctx->num_entries);
-  ctx->is_labeled = is_labeled;
+  ctx->is_labeled  = is_labeled;
+  ctx->cache_flags = cache_flags;
 
   for (int i = 0; i < ctx->num_entries; i++) {
     ctx->entries[i].name = sl->components[i]->variable->name;

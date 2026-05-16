@@ -1,6 +1,6 @@
 #include "solver/rank/seq.h"
 
-
+#include "solver/count/eval.h"
 #include "solver/math.h"
 
 void rank_seq_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int depth) {
@@ -92,24 +92,42 @@ void rank_seq_expr(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int depth)
   fmpz_init(bin);
   fmpz_t weight;
   fmpz_init(weight);
-  for (int i = 1; i < k; i++) {
-    Expr offset_tail_expr_struct = *expr;
-    if (expr->restriction != NONE) {
-      if (expr->restriction == GREATER && expr->limit == 0) {
-        offset_tail_expr_struct.restriction = NONE;
-        offset_tail_expr_struct.limit = 0;
-      } else {
-        offset_tail_expr_struct.limit = expr->limit - 1;
-      }
+  Expr offset_tail_expr_struct = *expr;
+  if (expr->restriction != NONE) {
+    if (expr->restriction == GREATER && expr->limit == 0) {
+      offset_tail_expr_struct.restriction = NONE;
+      offset_tail_expr_struct.limit = 0;
+    } else {
+      offset_tail_expr_struct.limit = expr->limit - 1;
     }
-    Expr *offset_tail_expr = &offset_tail_expr_struct;
+  }
+  Expr *offset_tail_expr = &offset_tail_expr_struct;
 
-    get_expr_count(count_A, ctx, child_expr, i);
-    get_expr_count(count_S, ctx, offset_tail_expr, n_total - i);
-    fmpz_bin_uiui(bin, n_total, i);
-    fmpz_mul(weight, count_A, count_S);
-    fmpz_mul(weight, weight, bin);
-    fmpz_add(res, res, weight);
+  if (k > 1 && (ctx->cache_flags & FCOMB_CACHE_POLY_HOIST)) {
+    fmpz_poly_t poly_A, poly_S;
+    fmpz_poly_init(poly_A);
+    fmpz_poly_init(poly_S);
+    compute_e(ctx, child_expr, poly_A, k, ctx->is_labeled);
+    compute_e(ctx, offset_tail_expr, poly_S, n_total - 1, ctx->is_labeled);
+    for (int i = 1; i < k; i++) {
+      fmpz_poly_get_coeff_fmpz(count_A, poly_A, i);
+      fmpz_poly_get_coeff_fmpz(count_S, poly_S, n_total - i);
+      fmpz_bin_uiui(bin, n_total, i);
+      fmpz_mul(weight, count_A, count_S);
+      fmpz_mul(weight, weight, bin);
+      fmpz_add(res, res, weight);
+    }
+    fmpz_poly_clear(poly_A);
+    fmpz_poly_clear(poly_S);
+  } else {
+    for (int i = 1; i < k; i++) {
+      get_expr_count(count_A, ctx, child_expr, i);
+      get_expr_count(count_S, ctx, offset_tail_expr, n_total - i);
+      fmpz_bin_uiui(bin, n_total, i);
+      fmpz_mul(weight, count_A, count_S);
+      fmpz_mul(weight, weight, bin);
+      fmpz_add(res, res, weight);
+    }
   }
 
   if (Rest_obj->num_children > 0)
@@ -196,22 +214,38 @@ void rank_seq_unlabeled(Context *ctx, Expr *expr, Object *obj, fmpz_t res, int d
   fmpz_t tmp;
   fmpz_init(tmp);
 
-  for (int i = 1; i < k; i++) {
-    Expr offset_tail_expr_struct = *expr;
-    if (expr->restriction != NONE) {
-      if (expr->restriction == GREATER && expr->limit == 0) {
-        offset_tail_expr_struct.restriction = NONE;
-        offset_tail_expr_struct.limit = 0;
-      } else {
-        offset_tail_expr_struct.limit = expr->limit - 1;
-      }
+  Expr offset_tail_expr_struct2 = *expr;
+  if (expr->restriction != NONE) {
+    if (expr->restriction == GREATER && expr->limit == 0) {
+      offset_tail_expr_struct2.restriction = NONE;
+      offset_tail_expr_struct2.limit = 0;
+    } else {
+      offset_tail_expr_struct2.limit = expr->limit - 1;
     }
-    Expr *offset_tail_expr = &offset_tail_expr_struct;
+  }
+  Expr *offset_tail_expr2 = &offset_tail_expr_struct2;
 
-    get_expr_count(ca, ctx, child_expr, i);
-    get_expr_count(cs, ctx, offset_tail_expr, n - i);
-    fmpz_mul(tmp, ca, cs);
-    fmpz_add(accumulated, accumulated, tmp);
+  if (k > 1 && (ctx->cache_flags & FCOMB_CACHE_POLY_HOIST)) {
+    fmpz_poly_t poly_A, poly_S;
+    fmpz_poly_init(poly_A);
+    fmpz_poly_init(poly_S);
+    compute_e(ctx, child_expr, poly_A, k, ctx->is_labeled);
+    compute_e(ctx, offset_tail_expr2, poly_S, n - 1, ctx->is_labeled);
+    for (int i = 1; i < k; i++) {
+      fmpz_poly_get_coeff_fmpz(ca, poly_A, i);
+      fmpz_poly_get_coeff_fmpz(cs, poly_S, n - i);
+      fmpz_mul(tmp, ca, cs);
+      fmpz_add(accumulated, accumulated, tmp);
+    }
+    fmpz_poly_clear(poly_A);
+    fmpz_poly_clear(poly_S);
+  } else {
+    for (int i = 1; i < k; i++) {
+      get_expr_count(ca, ctx, child_expr, i);
+      get_expr_count(cs, ctx, offset_tail_expr2, n - i);
+      fmpz_mul(tmp, ca, cs);
+      fmpz_add(accumulated, accumulated, tmp);
+    }
   }
 
   /* res = accumulated + rank_A * count_S + rank_Rest */
